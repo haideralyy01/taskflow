@@ -1,8 +1,13 @@
-
+import Todo from './pages/Todo'
 import Auth from './pages/Auth'
 
 function App() {
-  return <Auth />
+  return (
+    <>
+      <Todo />
+    </>
+  );
+
 }
 
 export default App
