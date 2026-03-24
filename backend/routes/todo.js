@@ -44,6 +44,58 @@ todoRouter.get("/todos", middleware, async (req, res) =>{
     }
 });
 
+todoRouter.put("/todo/:id", middleware, async (req, res) => {
+    const { id } = req.params;
+    const { todoItem, completed } = req.body;
+
+    try {
+        const updateTodo = await TodoModel.findByIdAndUpdate({
+            _id: id
+        }, {
+            todoItem,
+            completed
+        }, {
+            new: true
+        });
+        if (!updateTodo) {
+            return res.status(404).json({
+                message: "Todo not found"
+            });
+        }
+        res.status(200).json({
+            message: "Todo updated successfully",
+            updateTodo
+        });
+    } catch (err) {
+        res.status(400).json({
+            message: "Error updating todo",
+            error: err.message
+        });
+    }
+});
+
+todoRouter.delete("/todo/:id", middleware, async (req, res) => {
+    const { id } = req.params;
+    try {
+        const deleteTodo = TodoModel.findByIdAndDelete({
+            _id: id
+        });
+        if (!deleteTodo) {
+            return res.status(404).json({
+                message: "Todo not found"
+            });
+        }
+        res.status(200).json({
+            message: "Todo deleted successfully"
+        });
+    } catch (err) {
+        res.status(400).json({
+            message: "Error deleting todo",
+            error: err.message
+        });
+    }
+});
+
 module.exports = {
     todoRouter
 }
