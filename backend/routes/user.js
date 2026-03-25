@@ -8,14 +8,29 @@ userRouter.post("/signup", async (req, res) => {
     const { email, password, name } = req.body;
 
     try {
-        await UserModel.create ({
+        const existingUser = UserModel.findOne({
+            email
+        });
+        if (existingUser) {
+            return res.status(400).json({
+                message: "User already exists"
+            });
+        }
+
+        const user = await UserModel.create ({
             email,
             password,
             name
         });
 
+        const token = jwt.sign({
+            id: user._id
+        }, JWT_SECRET, { expiresIn: "1h"});
+
         res.status(200).json({
-            message: "User created successfully"
+            message: "User created successfully",
+            user,
+            token
         })
     } catch (err) {
         res.status(400).json({
@@ -35,6 +50,12 @@ userRouter.post("/login", async (req, res) => {
         if (!user) {
             return res.status(404).json({
                 message: "User not found"
+            });
+        }
+
+        if (user.password != password) {
+            return res.status(400).json({
+                message: "Invalid password"
             });
         }
 
