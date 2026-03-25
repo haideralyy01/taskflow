@@ -1,7 +1,35 @@
+import { useNavigate } from "react-router-dom";
 import { useState } from "react";
+import { useAuth } from "../context/AuthContext"
 
 export default function AuthPage() {
     const [mode, setMode] = useState("login"); // "login" | "signup"
+    const navigate = useNavigate();
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [password, setPassword] = useState('');
+    const { login, signup, setUser } = useAuth();
+
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        if (!email || !password || (!name && mode !== "login")) {
+            alert("Please fill in all fields");
+            return;
+        }
+
+        try {
+            if (mode === "login") {
+                await login(email, password);
+            } else {
+                await signup(name, email, password);
+            }
+            navigate("/todo");
+        } catch (err) {
+            console.error("Auth failed:", err);
+            alert("Authentication error");
+        }
+    };
+
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-[#0f0f11] font-sans p-4">
@@ -42,17 +70,19 @@ export default function AuthPage() {
                         <div className="flex flex-col gap-[0.35rem] anim-fade-slide">
                             <label
                                 htmlFor="name"
-                                className="text-[0.8rem] font-medium text-subtle"
+                                className="text-[0.8rem] font-medium text-[#a1a1aa]"
                             >
                                 Full Name
                             </label>
                             <input
                                 id="name"
                                 type="text"
+                                value={name}
+                                onChange={(e) => setName(e.target.value)}
                                 placeholder="John Doe"
                                 required
                                 className="px-3.5 py-2.5 bg-[#09090b] border border-[#27272a]
-                                    rounded-lg text-fore text-[0.9rem] outline-none
+                                    rounded-lg text-[#fafafa] text-[0.9rem] outline-none
                                     transition-[border-color] duration-200
                                     placeholder:text-[#3f3f46]
                                     focus:border-[#7c3aed]"
@@ -70,6 +100,8 @@ export default function AuthPage() {
                         <input
                             id="email"
                             type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
                             placeholder="you@example.com"
                             required
                             className="px-3.5 py-2.5 bg-[#09090b] border border-[#27272a]
@@ -90,6 +122,8 @@ export default function AuthPage() {
                         <input
                             id="password"
                             type="password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
                             placeholder="••••••••"
                             required
                             className="px-3.5 py-2.5 bg-[#09090b] border border-[#27272a]
@@ -113,6 +147,7 @@ export default function AuthPage() {
 
                     <button
                         type="submit"
+                        onClick={handleSubmit}
                         className="mt-1 py-[0.7rem] border-none rounded-lg bg-[#7c3aed] text-white
                             text-[0.9rem] font-semibold cursor-pointer
                             transition-[background,transform] duration-200
