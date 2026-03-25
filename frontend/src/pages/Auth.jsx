@@ -8,7 +8,7 @@ export default function AuthPage() {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
-    const { login, signup, setUser } = useAuth();
+    const { login, signup} = useAuth();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
