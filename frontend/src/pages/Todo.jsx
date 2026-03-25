@@ -1,5 +1,7 @@
 import EditIcon from "../icons/EditIcon";
 import DeleteIcon from "../icons/DeleteIcon";
+import { useAuth } from "../context/AuthContext";
+
 
 const todos = [
     { id: 1, text: "Design the dashboard layout" },
@@ -9,19 +11,32 @@ const todos = [
 ];
 
 export default function TodoPage() {
-    const userName = "Haider Ali";
+    const { user, loading } = useAuth();
+    const userName = user?.name || "Guest";
 
     return (
         <div className="min-h-screen bg-[#0f0f11] font-sans text-[#fafafa] p-4 sm:p-8">
             <div className="max-w-160 mx-auto flex flex-col gap-8">
                 <div className="flex items-center justify-between">
-                    <div>
-                        <p className="text-sm text-[#71717a] mb-0.5">Welcome back,</p>
-                        <h1 className="text-2xl font-bold tracking-tight">{userName} 👋</h1>
-                    </div>
-                    <div className="w-10 h-10 rounded-full bg-[#7c3aed] flex items-center justify-center font-bold text-sm select-none">
-                        {userName.charAt(0)}
-                    </div>
+                    {loading ? (
+                        <>
+                            <div className="flex flex-col gap-2">
+                                <div className="h-3.5 w-24 rounded-full bg-[#27272a] animate-pulse" />
+                                <div className="h-7 w-40 rounded-lg bg-[#27272a] animate-pulse" />
+                            </div>
+                            <div className="w-10 h-10 rounded-full bg-[#27272a] animate-pulse" />
+                        </>
+                    ) : (
+                        <>
+                            <div>
+                                <p className="text-sm text-[#71717a] mb-0.5">Welcome back,</p>
+                                <h1 className="text-2xl font-bold tracking-tight">{userName} 👋</h1>
+                            </div>
+                            <div className="w-10 h-10 rounded-full bg-[#7c3aed] flex items-center justify-center font-bold text-sm select-none">
+                                {userName.charAt(0)}
+                            </div>
+                        </>
+                    )}
                 </div>
                 <div className="flex gap-3">
                     <input

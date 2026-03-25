@@ -1,10 +1,18 @@
 import axios from "axios";
-import { createContext, useState, useContext } from "react";
+import { createContext, useState, useContext, useEffect } from "react";
 
 const AuthContext = createContext();
 
 export const AuthProvider = ({children}) => {
     const [user, setUser] = useState(null);
+    const [loading, setLoading] = useState(true)
+    useEffect(() => {
+    const savedUser = localStorage.getItem("user");
+        if (savedUser) {
+            setUser(JSON.parse(savedUser));
+        }
+        setLoading(false);
+    }, [])
 
     const signup = async (name, email, password) => {
         try {
@@ -17,6 +25,7 @@ export const AuthProvider = ({children}) => {
                 alert("Signup successful");
                 setUser(res.data.user);
                 localStorage.setItem("token", res.data.token);
+                localStorage.setItem("user", JSON.stringify(res.data.user));
             } else {
                 alert("Signup failed");
             }
@@ -36,6 +45,7 @@ export const AuthProvider = ({children}) => {
                 alert("Login successful");
                 setUser(res.data.user);
                 localStorage.setItem("token", res.data.token);
+                localStorage.setItem("user", JSON.stringify(res.data.user));
             } else {
                 alert("Login failed");
             }
@@ -51,7 +61,7 @@ export const AuthProvider = ({children}) => {
     }
 
     return (
-        <AuthContext.Provider value={{user, setUser, login, signup, logout}}>
+        <AuthContext.Provider value={{user, setUser, login, signup, logout, loading}}>
             {children}
         </AuthContext.Provider>
     )
