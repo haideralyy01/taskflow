@@ -8,7 +8,7 @@ userRouter.post("/signup", async (req, res) => {
     const { email, password, name } = req.body;
 
     try {
-        const existingUser = UserModel.findOne({
+        const existingUser = await UserModel.findOne({
             email
         });
         if (existingUser) {
