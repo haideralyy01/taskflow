@@ -1,18 +1,67 @@
 import EditIcon from "../icons/EditIcon";
 import DeleteIcon from "../icons/DeleteIcon";
 import { useAuth } from "../context/AuthContext";
-
-
-const todos = [
-    { id: 1, text: "Design the dashboard layout" },
-    { id: 2, text: "Set up authentication flow" },
-    { id: 3, text: "Connect backend API endpoints" },
-    { id: 4, text: "Write unit tests for core modules" },
-];
+import { useState } from "react";
+import { useEffect } from "react";
+import axios from "axios";
 
 export default function TodoPage() {
     const { user, loading } = useAuth();
+    const [newTask, setNewTask] = useState("");
+    const [todos, setTodos] = useState([]);
     const userName = user?.name || "Guest";
+
+    const addTodo = async () => {
+        if (!newTask.trim()) return
+        try {
+            const token = localStorage.getItem("token");
+            const res = await axios.post("http://localhost:3000/api/todo", {
+                todoItem: newTask,
+                completed: false
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.status === 200) {
+                setTodos([...todos, res.data.todo]);
+                setNewTask("");
+            }
+        } catch (err) {
+            console.error("Failed to add todo:", err);
+        }
+    }
+
+    useEffect(() => {
+        const fetchTodos = async () => {
+            if (!user) return
+            try {
+                const token = localStorage.getItem("token");
+                const res = await axios.get("http://localhost:3000/api/todos", {
+                    headers: { Authorization: `Bearer ${token}` }
+                });
+                if (res.status === 200) {
+                    setTodos(res.data.todos);
+                }
+            } catch (err) {
+                console.error("Failed to fetch todos:", err);
+            }
+        }
+        fetchTodos();
+    }, [user]);
+
+    const deleteTodo = async (todoId) => {
+        try {
+            const token = localStorage.getItem("token");
+            const res = await axios.delete(`http://localhost:3000/api/todo/${todoId}`, {
+                headers: { Authorization: `Bearer ${token}`}
+            });
+            if (res.status === 200) {
+                setTodos(todos.filter((t) => t._id !== todoId));
+            }
+
+        } catch (err) {
+            console.error("Failed to delete todo!", err);
+        }
+    }
 
     return (
         <div className="min-h-screen bg-[#0f0f11] font-sans text-[#fafafa] p-4 sm:p-8">
@@ -41,12 +90,16 @@ export default function TodoPage() {
                 <div className="flex gap-3">
                     <input
                         type="text"
+                        value={newTask}
+                        onChange={(e) => setNewTask(e.target.value)}
                         placeholder="Add a new task…"
                         className="flex-1 px-4 py-3 bg-[#18181b] border border-[#27272a] rounded-xl
                             text-[#fafafa] text-sm outline-none placeholder:text-[#3f3f46]
                             transition-[border-color] duration-200 focus:border-[#7c3aed]"
                     />
-                    <button className="px-5 py-3 bg-[#7c3aed] hover:bg-[#6d28d9] active:scale-[0.97]
+                    <button
+                    onClick={addTodo} 
+                    className="px-5 py-3 bg-[#7c3aed] hover:bg-[#6d28d9] active:scale-[0.97]
                         text-white text-sm font-semibold rounded-xl border-none cursor-pointer
                         transition-[background,transform] duration-200 whitespace-nowrap">
                         Add Task
@@ -64,13 +117,13 @@ export default function TodoPage() {
 
                     {todos.map((todo, i) => (
                         <div
-                            key={todo.id}
+                            key={todo._id}
                             className="anim-slide-up flex items-center gap-3 bg-[#18181b]
                                 border border-[#27272a] rounded-xl px-4 py-3.5
                                 hover:border-[#3f3f46] transition-[border-color] duration-200"
                             style={{ animationDelay: `${i * 50}ms` }}>
                             <div className="w-2 h-2 rounded-full bg-[#7c3aed] shrink-0" />
-                            <span className="flex-1 text-sm leading-snug">{todo.text}</span>
+                            <span className="flex-1 text-sm leading-snug">{todo.todoItem}</span>
                             <div className="flex items-center gap-2 shrink-0">
                                 <button className="flex items-center gap-1.5 text-xs font-medium
                                     text-[#71717a] hover:text-[#a78bfa] bg-transparent
@@ -80,7 +133,9 @@ export default function TodoPage() {
                                     <EditIcon />
                                     Edit
                                 </button>
-                                <button className="flex items-center gap-1.5 text-xs font-medium
+                                <button 
+                                onClick={() => deleteTodo(todo._id)}
+                                className="flex items-center gap-1.5 text-xs font-medium
                                     text-[#71717a] hover:text-rose-400 bg-transparent
                                     border border-[#27272a] hover:border-rose-500/50
                                     rounded-lg px-3 py-1.5 cursor-pointer
