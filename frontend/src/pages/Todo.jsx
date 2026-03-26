@@ -25,24 +25,44 @@ export default function TodoPage() {
 
     const saveEdit = async (todoId) => {
         if (!editText.trim()) return;
+        const currentTodo = todos.find(t => t._id === todoId);
         try {
             const token = localStorage.getItem("token");
             const res = await axios.put(`http://localhost:3000/api/todo/${todoId}`, {
-            todoItem: editText,
-            completed: false,
-        }, {
-            headers: { Authorization: `Bearer ${token}` }
-        });
-        if (res.status === 200) {
-            alert("Todo updated successfully");
-        }
-        setTodos(todos.map((t) =>
-            t._id === todoId ? { ...t, todoItem: editText.trim() } : t
-        ));
-        setEditingId(null);
-        setEditText("");
+                todoItem: editText,
+                completed: currentTodo ? currentTodo.completed : false,
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.status === 200) {
+                alert("Todo updated successfully");
+            }
+            setTodos(todos.map((t) =>
+                t._id === todoId ? { ...t, todoItem: editText.trim() } : t
+            ));
+            setEditingId(null);
+            setEditText("");
         } catch (err) {
             console.error("Failed to update todo", err)
+        }
+    };
+
+    const toggleComplete = async (todo) => {
+        try {
+            const token = localStorage.getItem("token");
+            const res = await axios.put(`http://localhost:3000/api/todo/${todo._id}`, {
+                todoItem: todo.todoItem,
+                completed: !todo.completed
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (res.status === 200) {
+                setTodos(todos.map((t) =>
+                    t._id === todo._id ? { ...t, completed: !t.completed } : t
+                ));
+            }
+        } catch (err) {
+            console.error("Failed to update todo status", err);
         }
     };
 
@@ -104,7 +124,7 @@ export default function TodoPage() {
         try {
             const token = localStorage.getItem("token");
             const res = await axios.delete(`http://localhost:3000/api/todo/${todoId}`, {
-                headers: { Authorization: `Bearer ${token}`}
+                headers: { Authorization: `Bearer ${token}` }
             });
             if (res.status === 200) {
                 setTodos(todos.filter((t) => t._id !== todoId));
@@ -150,8 +170,8 @@ export default function TodoPage() {
                             transition-[border-color] duration-200 focus:border-[#7c3aed]"
                     />
                     <button
-                    onClick={addTodo} 
-                    className="px-5 py-3 bg-[#7c3aed] hover:bg-[#6d28d9] active:scale-[0.97]
+                        onClick={addTodo}
+                        className="px-5 py-3 bg-[#7c3aed] hover:bg-[#6d28d9] active:scale-[0.97]
                         text-white text-sm font-semibold rounded-xl border-none cursor-pointer
                         transition-[background,transform] duration-200 whitespace-nowrap">
                         Add Task
@@ -178,7 +198,7 @@ export default function TodoPage() {
                                     : "border-[#27272a] hover:border-[#3f3f46]"}`}
                             style={{ animationDelay: `${i * 50}ms` }}>
                             <div className={`w-2 h-2 rounded-full shrink-0 transition-colors duration-200
-                                ${editingId === todo._id ? "bg-[#a78bfa]" : "bg-[#7c3aed]"}`} />
+                                ${editingId === todo._id ? "bg-[#a78bfa]" : todo.completed ? "bg-[#22c55e]" : "bg-[#7c3aed]"}`} />
 
                             {editingId === todo._id ? (
                                 /* ── Editing mode ── */
@@ -219,8 +239,18 @@ export default function TodoPage() {
                             ) : (
                                 /* ── Display mode ── */
                                 <>
-                                    <span className="flex-1 text-sm leading-snug">{todo.todoItem}</span>
+                                    <span className={`flex-1 text-sm leading-snug transition-colors duration-200 ${todo.completed ? 'line-through text-[#71717a]' : ''}`}>
+                                        {todo.todoItem}
+                                    </span>
                                     <div className="flex items-center gap-2 shrink-0">
+                                        <button
+                                            onClick={() => toggleComplete(todo)}
+                                            className={`flex items-center gap-1.5 text-xs font-medium border rounded-lg px-3 py-1.5 cursor-pointer transition-all duration-150 ${todo.completed
+                                                ? "bg-[#22c55e]/10 text-[#22c55e] border-[#22c55e]/30 hover:bg-[#22c55e]/20"
+                                                : "bg-transparent text-[#71717a] hover:text-[#4ade80] border-[#27272a] hover:border-[#22c55e]"
+                                                }`}>
+                                            {todo.completed ? "✓ Completed" : "Complete"}
+                                        </button>
                                         <button
                                             onClick={() => startEditing(todo)}
                                             className="flex items-center gap-1.5 text-xs font-medium
@@ -231,7 +261,7 @@ export default function TodoPage() {
                                             <EditIcon />
                                             Edit
                                         </button>
-                                        <button 
+                                        <button
                                             onClick={() => deleteTodo(todo._id)}
                                             className="flex items-center gap-1.5 text-xs font-medium
                                                 text-[#71717a] hover:text-rose-400 bg-transparent
