@@ -1,15 +1,67 @@
 import EditIcon from "../icons/EditIcon";
 import DeleteIcon from "../icons/DeleteIcon";
 import { useAuth } from "../context/AuthContext";
-import { useState } from "react";
-import { useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import axios from "axios";
 
 export default function TodoPage() {
     const { user, loading } = useAuth();
     const [newTask, setNewTask] = useState("");
     const [todos, setTodos] = useState([]);
+    const [editingId, setEditingId] = useState(null);
+    const [editText, setEditText] = useState("");
+    const editInputRef = useRef(null);
     const userName = user?.name || "Guest";
+
+    const startEditing = (todo) => {
+        setEditingId(todo._id);
+        setEditText(todo.todoItem);
+    };
+
+    const cancelEditing = () => {
+        setEditingId(null);
+        setEditText("");
+    };
+
+    const saveEdit = async (todoId) => {
+        if (!editText.trim()) return;
+        try {
+            const token = localStorage.getItem("token");
+            const res = await axios.put(`http://localhost:3000/api/todo/${todoId}`, {
+            todoItem: editText,
+            completed: false,
+        }, {
+            headers: { Authorization: `Bearer ${token}` }
+        });
+        if (res.status === 200) {
+            alert("Todo updated successfully");
+        }
+        setTodos(todos.map((t) =>
+            t._id === todoId ? { ...t, todoItem: editText.trim() } : t
+        ));
+        setEditingId(null);
+        setEditText("");
+        } catch (err) {
+            console.error("Failed to update todo", err)
+        }
+    };
+
+    const handleEditKeyDown = (e, todoId) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            saveEdit(todoId);
+        } else if (e.key === "Escape") {
+            cancelEditing();
+        }
+    };
+
+    // Auto-focus the edit input when editing starts
+    useEffect(() => {
+        if (editingId && editInputRef.current) {
+            editInputRef.current.focus();
+            editInputRef.current.select();
+        }
+    }, [editingId]);
 
     const addTodo = async () => {
         if (!newTask.trim()) return
@@ -118,32 +170,80 @@ export default function TodoPage() {
                     {todos.map((todo, i) => (
                         <div
                             key={todo._id}
-                            className="anim-slide-up flex items-center gap-3 bg-[#18181b]
-                                border border-[#27272a] rounded-xl px-4 py-3.5
-                                hover:border-[#3f3f46] transition-[border-color] duration-200"
+                            className={`anim-slide-up flex items-center gap-3 bg-[#18181b]
+                                border rounded-xl px-4 py-3.5
+                                transition-[border-color] duration-200
+                                ${editingId === todo._id
+                                    ? "border-[#7c3aed]"
+                                    : "border-[#27272a] hover:border-[#3f3f46]"}`}
                             style={{ animationDelay: `${i * 50}ms` }}>
-                            <div className="w-2 h-2 rounded-full bg-[#7c3aed] shrink-0" />
-                            <span className="flex-1 text-sm leading-snug">{todo.todoItem}</span>
-                            <div className="flex items-center gap-2 shrink-0">
-                                <button className="flex items-center gap-1.5 text-xs font-medium
-                                    text-[#71717a] hover:text-[#a78bfa] bg-transparent
-                                    border border-[#27272a] hover:border-[#7c3aed]
-                                    rounded-lg px-3 py-1.5 cursor-pointer
-                                    transition-[color,border-color] duration-150">
-                                    <EditIcon />
-                                    Edit
-                                </button>
-                                <button 
-                                onClick={() => deleteTodo(todo._id)}
-                                className="flex items-center gap-1.5 text-xs font-medium
-                                    text-[#71717a] hover:text-rose-400 bg-transparent
-                                    border border-[#27272a] hover:border-rose-500/50
-                                    rounded-lg px-3 py-1.5 cursor-pointer
-                                    transition-[color,border-color] duration-150">
-                                    <DeleteIcon />
-                                    Delete
-                                </button>
-                            </div>
+                            <div className={`w-2 h-2 rounded-full shrink-0 transition-colors duration-200
+                                ${editingId === todo._id ? "bg-[#a78bfa]" : "bg-[#7c3aed]"}`} />
+
+                            {editingId === todo._id ? (
+                                /* ── Editing mode ── */
+                                <>
+                                    <input
+                                        ref={editInputRef}
+                                        type="text"
+                                        value={editText}
+                                        onChange={(e) => setEditText(e.target.value)}
+                                        onKeyDown={(e) => handleEditKeyDown(e, todo._id)}
+                                        className="flex-1 bg-[#0f0f11] border border-[#3f3f46] rounded-lg
+                                            px-3 py-1.5 text-sm text-[#fafafa] outline-none
+                                            placeholder:text-[#3f3f46]
+                                            transition-[border-color] duration-200
+                                            focus:border-[#7c3aed]"
+                                    />
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <button
+                                            onClick={() => saveEdit(todo._id)}
+                                            className="flex items-center gap-1.5 text-xs font-medium
+                                                text-[#22c55e] hover:text-[#4ade80] bg-transparent
+                                                border border-[#22c55e]/30 hover:border-[#22c55e]
+                                                rounded-lg px-3 py-1.5 cursor-pointer
+                                                transition-[color,border-color] duration-150">
+                                            ✓ Save
+                                        </button>
+                                        <button
+                                            onClick={cancelEditing}
+                                            className="flex items-center gap-1.5 text-xs font-medium
+                                                text-[#71717a] hover:text-[#a1a1aa] bg-transparent
+                                                border border-[#27272a] hover:border-[#3f3f46]
+                                                rounded-lg px-3 py-1.5 cursor-pointer
+                                                transition-[color,border-color] duration-150">
+                                            ✕ Cancel
+                                        </button>
+                                    </div>
+                                </>
+                            ) : (
+                                /* ── Display mode ── */
+                                <>
+                                    <span className="flex-1 text-sm leading-snug">{todo.todoItem}</span>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <button
+                                            onClick={() => startEditing(todo)}
+                                            className="flex items-center gap-1.5 text-xs font-medium
+                                                text-[#71717a] hover:text-[#a78bfa] bg-transparent
+                                                border border-[#27272a] hover:border-[#7c3aed]
+                                                rounded-lg px-3 py-1.5 cursor-pointer
+                                                transition-[color,border-color] duration-150">
+                                            <EditIcon />
+                                            Edit
+                                        </button>
+                                        <button 
+                                            onClick={() => deleteTodo(todo._id)}
+                                            className="flex items-center gap-1.5 text-xs font-medium
+                                                text-[#71717a] hover:text-rose-400 bg-transparent
+                                                border border-[#27272a] hover:border-rose-500/50
+                                                rounded-lg px-3 py-1.5 cursor-pointer
+                                                transition-[color,border-color] duration-150">
+                                            <DeleteIcon />
+                                            Delete
+                                        </button>
+                                    </div>
+                                </>
+                            )}
                         </div>
                     ))}
                 </div>
