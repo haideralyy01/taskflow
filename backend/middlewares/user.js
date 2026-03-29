@@ -3,7 +3,8 @@ const { JWT_SECRET } = require('../configurations/config');
 
 function middleware(req, res, next) {
     try {
-        const token = req.headers.token;
+        const authHeader = req.headers["authorization"];
+        const token = authHeader && authHeader.split(" ")[1];
         if (!token) {
             return  res.status(401).json({
                 message: "No token provided"

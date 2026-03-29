@@ -9,13 +9,14 @@ todoRouter.post("/todo", middleware, async (req, res) => {
     const { todoItem, completed } = req.body;
 
     try {
-        await TodoModel.create({
+        const todo = await TodoModel.create({
             userId,
             todoItem,
             completed
         });
         res.status(200).json({
-            message: "Todo created successfully"
+            message: "Todo created successfully",
+            todo
         });
     } catch (err) {
         res.status(400).json({
@@ -77,9 +78,7 @@ todoRouter.put("/todo/:id", middleware, async (req, res) => {
 todoRouter.delete("/todo/:id", middleware, async (req, res) => {
     const { id } = req.params;
     try {
-        const deleteTodo = TodoModel.findByIdAndDelete({
-            _id: id
-        });
+        const deleteTodo = await TodoModel.findByIdAndDelete(id);
         if (!deleteTodo) {
             return res.status(404).json({
                 message: "Todo not found"

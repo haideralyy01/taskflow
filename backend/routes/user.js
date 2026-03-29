@@ -27,9 +27,14 @@ userRouter.post("/signup", async (req, res) => {
             id: user._id
         }, JWT_SECRET, { expiresIn: "1h"});
 
+        const safeUser = {
+            _id: user._id,
+            email: user.email,
+            name: user.name
+        }
         res.status(200).json({
             message: "User created successfully",
-            user,
+            user: safeUser,
             token
         })
     } catch (err) {
@@ -63,9 +68,15 @@ userRouter.post("/login", async (req, res) => {
             id: user._id
         }, JWT_SECRET, { expiresIn: "1h"})
 
+        const safeUser = {
+            _id: user._id,
+            email: user.email,
+            name: user.name
+        }
+
         res.status(200).json({
             message: "Login successful",
-            user,
+            user: safeUser,
             token
         });
     } catch (err) {
