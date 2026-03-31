@@ -9,11 +9,13 @@ export default function AuthPage() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const { login, signup} = useAuth();
+    const [error, setError] = useState('');
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+        setError('');
         if (!email || !password || (!name && mode !== "login")) {
-            alert("Please fill in all fields");
+            setError("Please fill in all fields");
             return;
         }
 
@@ -26,7 +28,10 @@ export default function AuthPage() {
             navigate("/todo");
         } catch (err) {
             console.error("Auth failed:", err);
-            alert("Authentication error");
+            const msg = err?.response?.data?.message
+                || err?.message
+                || "Something went wrong. Please try again.";
+            setError(msg);
         }
     };
 
@@ -64,8 +69,13 @@ export default function AuthPage() {
                 {/* Form */}
                 <form
                     className="flex flex-col gap-4"
-                    onSubmit={(e) => e.preventDefault()}
+                    onSubmit={handleSubmit}
                 >
+                    {error && (
+                        <div className="px-3.5 py-2.5 bg-rose-500/10 border border-rose-500/30 rounded-lg text-rose-400 text-[0.82rem]">
+                            {error}
+                        </div>
+                    )}
                     {mode === "signup" && (
                         <div className="flex flex-col gap-[0.35rem] anim-fade-slide">
                             <label
@@ -147,7 +157,6 @@ export default function AuthPage() {
 
                     <button
                         type="submit"
-                        onClick={handleSubmit}
                         className="mt-1 py-[0.7rem] border-none rounded-lg bg-[#7c3aed] text-white
                             text-[0.9rem] font-semibold cursor-pointer
                             transition-[background,transform] duration-200

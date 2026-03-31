@@ -3,15 +3,22 @@ import DeleteIcon from "../icons/DeleteIcon";
 import { useAuth } from "../context/AuthContext";
 import { useState, useEffect, useRef } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom";
 
 export default function TodoPage() {
-    const { user, loading } = useAuth();
+    const { user, loading, logout } = useAuth();
+    const navigate = useNavigate();
     const [newTask, setNewTask] = useState("");
     const [todos, setTodos] = useState([]);
     const [editingId, setEditingId] = useState(null);
     const [editText, setEditText] = useState("");
     const editInputRef = useRef(null);
     const userName = user?.name || "Guest";
+
+    const handleLogout = () => {
+        logout();
+        navigate('/auth');
+    };
 
     const startEditing = (todo) => {
         setEditingId(todo._id);
@@ -153,8 +160,15 @@ export default function TodoPage() {
                                 <p className="text-sm text-[#71717a] mb-0.5">Welcome back,</p>
                                 <h1 className="text-2xl font-bold tracking-tight">{userName} 👋</h1>
                             </div>
-                            <div className="w-10 h-10 rounded-full bg-[#7c3aed] flex items-center justify-center font-bold text-sm select-none">
-                                {userName.charAt(0)}
+                            <div className="flex items-center gap-4">
+                                <button
+                                    onClick={handleLogout}
+                                    className="text-sm font-medium text-[#71717a] hover:text-rose-400 transition-colors duration-200 cursor-pointer bg-transparent border-none p-0">
+                                    Logout
+                                </button>
+                                <div className="w-10 h-10 rounded-full bg-[#7c3aed] flex items-center justify-center font-bold text-sm select-none shadow-[0_0_15px_rgba(124,58,237,0.3)]">
+                                    {userName.charAt(0)}
+                                </div>
                             </div>
                         </>
                     )}
